@@ -14,11 +14,13 @@ struct FptrLink {
     FptrLink *next;
 };
 
+auto *moveForwardLink = new FptrLink;
+
 struct Path {
-    Point *node_point = nullptr;
-    Path *next = nullptr;
-    FptrLink *fptr_operations_front{};
-    FptrLink *fptr_operations_rear = fptr_operations_front->next;
+    Point *node_point{};
+    Path *next{};
+    FptrLink *fptr_operations_front = moveForwardLink;
+    FptrLink *fptr_operations_rear = moveForwardLink->next;
 };
 
 bool checkPath(Path *path);
@@ -43,9 +45,11 @@ Point *moveDown(Point *point);
 
 Point *moveLeft(Point *point);
 
-void initializeMoveForwardLink(FptrLink *moveForwardLink);
+void initializeMoveForwardLink();
 
 void moveForward(Path *path);
+
+void safeMoveForward(Path *path);
 
 
 int maze[10][10] = {
@@ -62,8 +66,7 @@ int maze[10][10] = {
 
 
 int main() {
-    auto *moveForwardLink = new FptrLink;
-    initializeMoveForwardLink(moveForwardLink);
+    initializeMoveForwardLink();
 
     int start_x, start_y, end_x, end_y;
     auto *start_point = new Point;
@@ -83,22 +86,9 @@ int main() {
     end_point->y = end_y;
 
     Path *test_path = new Path;
-    pushStack(test_path, start_point);
-    getTop(test_path)->fptr_operations_front = moveForwardLink;
     searchForPath(test_path, start_point, end_point);
 }
 
-bool checkPath(Path *path) {
-    if (isEmpty(path))
-        cout << "ERROR! The path stack is empty." << endl;
-    else {
-        Path *ptr = getTop(path);
-        if (ptr->fptr_operations_rear == ptr->fptr_operations_front)
-            return true;
-        else
-            return false;
-    }
-}
 
 Path *getTop(Path *path) {
     if (isEmpty(path)) {
@@ -138,7 +128,7 @@ void displayPath(Path *path) {
     if (isEmpty(path))
         cout << "ERROR! The path stack is empty." << endl;
     else {
-        Path *ptr = path->next;
+        Path *ptr = getTop(path);
         while (ptr != nullptr) {
             cout << "(" << ptr->node_point->x << "," << ptr->node_point->y << ")<--";
             ptr = ptr->next;
@@ -174,7 +164,7 @@ Point *moveLeft(Point *point) {
     return new_point;
 }
 
-void initializeMoveForwardLink(FptrLink *moveForwardLink) {
+void initializeMoveForwardLink() {
     FptrLink *ptr = moveForwardLink;
     ptr->function_pointer = moveUp;
 
@@ -193,13 +183,43 @@ void initializeMoveForwardLink(FptrLink *moveForwardLink) {
     ptr->next = moveForwardLink;
 }
 
+bool checkPath(Path *path) {
+    if (isEmpty(path))
+        cout << "ERROR! The path stack is empty." << endl;
+    else {
+        Path *ptr = getTop(path);
+        if (ptr->fptr_operations_rear == ptr->fptr_operations_front) {
+            cout << "(" << ptr->node_point->x << "," << ptr->node_point->y << ")<--";
+            cout << " has benn tried out! " << endl;
+            return true;
+        } else {
+            cout << "(" << ptr->node_point->x << "," << ptr->node_point->y << ")<--";
+            cout << " still can try! " << endl;
+            return false;
+        }
+    }
+}
+
 void moveForward(Path *path) {
     Path *ptr = getTop(path);
+
+    Point *new_point = ptr->fptr_operations_rear->function_pointer(ptr->node_point);
+    ptr->fptr_operations_rear = ptr->fptr_operations_rear->next;
+    pushStack(path, new_point);
+    getTop(path)->fptr_operations_front = ptr->fptr_operations_rear->next;
+    getTop(path)->fptr_operations_rear = getTop(path)->fptr_operations_front->next;
+}
+
+void safeMoveForward(Path *path) {
+    Path *ptr = getTop(path);
+
     if (!checkPath(path)) {
-        Point *new_point = ptr->fptr_operations_rear->function_pointer(ptr->node_point);
-        ptr->fptr_operations_rear = ptr->fptr_operations_rear->next;
-        pushStack(path, new_point);
-        getTop(path)->fptr_operations_front = ptr->fptr_operations_rear;
+        if (maze[ptr->node_point->x][ptr->node_point->y] == 1) {
+            popStack(path);
+            cout << "(" << ptr->node_point->x << "," << ptr->node_point->y << ")<--";
+            cout << " is wrong! " << endl;
+        }
+        moveForward(path);
     } else {
         maze[ptr->node_point->x][ptr->node_point->y] = 1;
         popStack(path);
@@ -207,12 +227,15 @@ void moveForward(Path *path) {
 }
 
 void searchForPath(Path *path, Point *start_point, Point *end_point) {
+    pushStack(path, start_point);
+//    moveForward(path);
+
     while (getTop(path)->node_point->x != end_point->x && getTop(path)->node_point->y != end_point->y) {
-        moveForward(path);
-        if (getTop(path)->node_point->x == start_point->x && getTop(path)->node_point->y == start_point->y) {
-            cout << "No path found!" << endl;
-            break;
-        }
+        safeMoveForward(path);
+//        if (getTop(path)->node_point->x == start_point->x && getTop(path)->node_point->y == start_point->y) {
+//            cout << "No path found!" << endl;
+//            break;
+//        }
     }
     displayPath(path);
 }
