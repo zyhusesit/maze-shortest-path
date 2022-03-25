@@ -5,6 +5,7 @@ using namespace std;
 struct Point {
     int x, y;
     int prev_point_index;
+    Point *next;
 };
 
 struct PointQueue {
@@ -12,21 +13,27 @@ struct PointQueue {
     Point *rear;
 };
 
-void checkAllDirections(Point *points, PointQueue *points_queue);
+void checkAllDirections(PointQueue *points_queue);
 
 bool checkPoint(int x, int y);
 
-int getPointIndex(Point *points, Point *ptr_current_point);
+int getPointIndex(Point *&ptr_current_point);
 
-void moveUp(Point *points, PointQueue *points_queue);
+void moveUp(PointQueue *&points_queue);
 
-void moveRight(Point *points, PointQueue *points_queue);
+void moveRight(PointQueue *&points_queue);
 
-void moveDown(Point *points, PointQueue *points_queue);
+void moveDown(PointQueue *&points_queue);
 
-void moveLeft(Point *points, PointQueue *points_queue);
+void moveLeft(PointQueue *&points_queue);
 
-void searchForPath(Point *points, Point *end_point);
+void searchForPath(Point *&points_list, Point end_point);
+
+void displayPath(Point *point_list);
+
+void displayPoint(Point *point);
+
+Point *getPoint(int index);
 
 int maze[10][10] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -40,34 +47,62 @@ int maze[10][10] = {
         {1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},};
 
+auto start_point = new Point;
+
 int main() {
-    Point points[100];
-    points[0].prev_point_index = 0;
-    auto *end_point = new Point;
+    start_point->prev_point_index = 0;
+    Point end_point{};
 
     cout << "Please enter the X direction of your start point:" << endl;
-    cin >> points[0].x;
+    cin >> start_point->x;
     cout << "Please enter the Y direction of your start point:" << endl;
-    cin >> points[0].y;
+    cin >> start_point->y;
     cout << "Please enter the X direction of your end point:" << endl;
-    cin >> end_point->x;
+    cin >> end_point.x;
     cout << "Please enter the Y direction of your end point:" << endl;
-    cin >> end_point->y;
-
-    searchForPath(points, end_point);
+    cin >> end_point.y;
+    searchForPath(start_point, end_point);
 }
 
-void checkAllDirections(Point *points, PointQueue *points_queue) {
-    if (!checkPoint(points_queue->rear->x - 1, points_queue->rear->y))
-        moveUp(points, points_queue);
-    if (checkPoint(points_queue->rear->x, points_queue->rear->y + 1))
-        moveRight(points, points_queue);
-    if (checkPoint(points_queue->rear->x + 1, points_queue->rear->y))
-        moveDown(points, points_queue);
-    if (checkPoint(points_queue->rear->x, points_queue->rear->y - 1))
-        moveLeft(points, points_queue);
+void checkAllDirections(PointQueue *points_queue) {
+    bool isEnd = true;
+    Point *ptr = points_queue->front;
+    if (points_queue->front->x > 0 && points_queue->front->x < 9 && points_queue->front->y > 0 &&
+        points_queue->front->y < 9) {
+        if (points_queue->front->x > 1 && !checkPoint(points_queue->front->x - 1, points_queue->front->y)) {
+            maze[points_queue->front->x][points_queue->front->y] = 1;
 
-    points_queue->front = points_queue->front + 1;
+            moveUp(points_queue);
+            points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
+            isEnd = false;
+        }
+        if (points_queue->front->y < 8 && !checkPoint(points_queue->front->x, points_queue->front->y + 1)) {
+            maze[points_queue->front->x][points_queue->front->y] = 1;
+
+            moveRight(points_queue);
+            points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
+            isEnd = false;
+        }
+        if (points_queue->front->x < 8 && !checkPoint(points_queue->front->x + 1, points_queue->front->y)) {
+            maze[points_queue->front->x][points_queue->front->y] = 1;
+
+            moveDown(points_queue);
+            points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
+            isEnd = false;
+        }
+        if (points_queue->front->y > 1 && !checkPoint(points_queue->front->x, points_queue->front->y - 1)) {
+            maze[points_queue->front->x][points_queue->front->y] = 1;
+
+            moveLeft(points_queue);
+            points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
+            isEnd = false;
+        }
+        if (isEnd) {
+            maze[points_queue->front->x][points_queue->front->y] = 1;
+            cout << "Mark!" <<points_queue->front->x<<","<< points_queue->front->y<<endl;
+        }
+        points_queue->front = points_queue->front->next;
+    }
 }
 
 bool checkPoint(int x, int y) {
@@ -77,55 +112,91 @@ bool checkPoint(int x, int y) {
         return false;
 }
 
-int getPointIndex(Point *points, Point *ptr_current_point) {
-    return (int) (ptr_current_point - points);
+int getPointIndex(Point *&ptr_current_point) {
+    int i = 0;
+    Point *ptr = start_point;
+    while (ptr != ptr_current_point) {
+        ptr = ptr->next;
+        i++;
+    }
+    return i;
 }
 
-void moveUp(Point *points, PointQueue *points_queue) {
-    int current_point_index = getPointIndex(points, points_queue->rear) + 1;
-    points[current_point_index].x = points_queue->front->x - 1;
-    points[current_point_index].y = points_queue->front->y;
-    points[current_point_index].prev_point_index = getPointIndex(points, points_queue->front);
-    points_queue->rear = points_queue->rear + 1;
+void moveUp(PointQueue *&points_queue) {
+    auto *new_point = new Point;
+    new_point->x = points_queue->front->x - 1;
+    new_point->y = points_queue->front->y;
+    points_queue->rear->next = new_point;
+    points_queue->rear = new_point;
+
+    cout << "Move up" << "(" << new_point->x << "," << new_point->y << ")" << endl;
 }
 
-void moveRight(Point *points, PointQueue *points_queue) {
-    int current_point_index = getPointIndex(points, points_queue->rear) + 1;
-    points[current_point_index].x = points_queue->front->x - 1;
-    points[current_point_index].y = points_queue->front->y;
-    points[current_point_index].prev_point_index = getPointIndex(points, points_queue->front);
-    points_queue->rear = points_queue->rear + 1;
+void moveRight(PointQueue *&points_queue) {
+    auto *new_point = new Point;
+    new_point->x = points_queue->front->x;
+    new_point->y = points_queue->front->y + 1;
+    points_queue->rear->next = new_point;
+    points_queue->rear = new_point;
 
-}
-
-void moveDown(Point *points, PointQueue *points_queue) {
-    int current_point_index = getPointIndex(points, points_queue->rear) + 1;
-    points[current_point_index].x = points_queue->front->x - 1;
-    points[current_point_index].y = points_queue->front->y;
-    points[current_point_index].prev_point_index = getPointIndex(points, points_queue->front);
-    points_queue->rear = points_queue->rear + 1;
-
-}
-
-void moveLeft(Point *points, PointQueue *points_queue) {
-    int current_point_index = getPointIndex(points, points_queue->rear) + 1;
-    points[current_point_index].x = points_queue->front->x - 1;
-    points[current_point_index].y = points_queue->front->y;
-    points[current_point_index].prev_point_index = getPointIndex(points, points_queue->front);
-    points_queue->rear = points_queue->rear + 1;
+    cout << "Move right" << "(" << new_point->x << "," << new_point->y << ")" << endl;
 
 }
 
-void searchForPath(Point *points, Point *end_point) {
+void moveDown(PointQueue *&points_queue) {
+    auto *new_point = new Point;
+    new_point->x = points_queue->front->x + 1;
+    new_point->y = points_queue->front->y;
+    points_queue->rear->next = new_point;
+    points_queue->rear = new_point;
+
+    cout << "Move down" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+
+}
+
+void moveLeft(PointQueue *&points_queue) {
+    auto *new_point = new Point;
+    new_point->x = points_queue->front->x;
+    new_point->y = points_queue->front->y - 1;
+    points_queue->rear->next = new_point;
+    points_queue->rear = new_point;
+
+    cout << "Move left" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+
+}
+
+void searchForPath(Point *&points_list, Point end_point) {
     auto *points_queue = new PointQueue;
-    points_queue->front = points;
-    points_queue->rear = points;
+    points_queue->front = points_list;
+    points_queue->rear = points_list;
 
-    do {
-        while (points_queue->rear->x != end_point->x && points_queue->rear->y != end_point->y) {
-            checkAllDirections(points, points_queue);
-        }
-    } while (points_queue->front != points_queue->rear);
+    while (points_queue->rear->x != end_point.x && points_queue->rear->y != end_point.y) {
+//        do {
+//        } while (points_queue->front != points_queue->rear);
+        checkAllDirections(points_queue);
 
+    }
+    displayPath(points_queue->rear);
 }
+
+void displayPath(Point *list_tail) {
+    Point *ptr = list_tail;
+    while (ptr != start_point) {
+        displayPoint(ptr);
+        ptr = getPoint(ptr->prev_point_index);
+    }
+}
+
+void displayPoint(Point *point) {
+    cout << "(" << point->x << "," << point->y << ")<--";
+}
+
+Point *getPoint(int index) {
+    Point *ptr = start_point;
+    while (index--) {
+        ptr = ptr->next;
+    }
+    return ptr;
+}
+
 
