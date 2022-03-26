@@ -29,7 +29,7 @@ void moveLeft(PointQueue *&points_queue);
 
 void searchForPath(Point *&points_list, Point end_point);
 
-void displayPath(Point *point_list);
+void displayPath(Point *list_tail);
 
 void displayPoint(Point *point);
 
@@ -65,45 +65,29 @@ int main() {
 }
 
 void checkAllDirections(PointQueue *points_queue) {
-    bool isEnd = true;
-    Point *ptr = points_queue->front;
-    if (points_queue->front->x > 0 && points_queue->front->x < 9 && points_queue->front->y > 0 &&
-        points_queue->front->y < 9) {
-        if (points_queue->front->x > 1 && !checkPoint(points_queue->front->x - 1, points_queue->front->y)) {
-            maze[points_queue->front->x][points_queue->front->y] = 1;
 
+        if (points_queue->front->x > 1 && !checkPoint(points_queue->front->x - 1, points_queue->front->y)) {
             moveUp(points_queue);
             points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
-            isEnd = false;
         }
         if (points_queue->front->y < 8 && !checkPoint(points_queue->front->x, points_queue->front->y + 1)) {
-            maze[points_queue->front->x][points_queue->front->y] = 1;
-
             moveRight(points_queue);
             points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
-            isEnd = false;
         }
         if (points_queue->front->x < 8 && !checkPoint(points_queue->front->x + 1, points_queue->front->y)) {
-            maze[points_queue->front->x][points_queue->front->y] = 1;
-
             moveDown(points_queue);
             points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
-            isEnd = false;
         }
         if (points_queue->front->y > 1 && !checkPoint(points_queue->front->x, points_queue->front->y - 1)) {
-            maze[points_queue->front->x][points_queue->front->y] = 1;
-
             moveLeft(points_queue);
             points_queue->rear->prev_point_index = getPointIndex(points_queue->front);
-            isEnd = false;
         }
-        if (isEnd) {
-            maze[points_queue->front->x][points_queue->front->y] = 1;
-            cout << "Mark!" <<points_queue->front->x<<","<< points_queue->front->y<<endl;
-        }
-        points_queue->front = points_queue->front->next;
+        maze[points_queue->front->x][points_queue->front->y] = 1;
+//        cout << "Mark!" << points_queue->front->x << "," << points_queue->front->y << endl;
     }
-}
+
+
+
 
 bool checkPoint(int x, int y) {
     if (maze[x][y] == 1)
@@ -129,7 +113,8 @@ void moveUp(PointQueue *&points_queue) {
     points_queue->rear->next = new_point;
     points_queue->rear = new_point;
 
-    cout << "Move up" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+//    cout << "Move up" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+
 }
 
 void moveRight(PointQueue *&points_queue) {
@@ -139,7 +124,7 @@ void moveRight(PointQueue *&points_queue) {
     points_queue->rear->next = new_point;
     points_queue->rear = new_point;
 
-    cout << "Move right" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+//    cout << "Move right" << "(" << new_point->x << "," << new_point->y << ")" << endl;
 
 }
 
@@ -150,7 +135,7 @@ void moveDown(PointQueue *&points_queue) {
     points_queue->rear->next = new_point;
     points_queue->rear = new_point;
 
-    cout << "Move down" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+//    cout << "Move down" << "(" << new_point->x << "," << new_point->y << ")" << endl;
 
 }
 
@@ -161,7 +146,7 @@ void moveLeft(PointQueue *&points_queue) {
     points_queue->rear->next = new_point;
     points_queue->rear = new_point;
 
-    cout << "Move left" << "(" << new_point->x << "," << new_point->y << ")" << endl;
+//    cout << "Move left" << "(" << new_point->x << "," << new_point->y << ")" << endl;
 
 }
 
@@ -170,13 +155,24 @@ void searchForPath(Point *&points_list, Point end_point) {
     points_queue->front = points_list;
     points_queue->rear = points_list;
 
-    while (points_queue->rear->x != end_point.x && points_queue->rear->y != end_point.y) {
-//        do {
-//        } while (points_queue->front != points_queue->rear);
-        checkAllDirections(points_queue);
+    do {
+        if (points_queue->front->x != end_point.x || points_queue->front->y != end_point.y){
+            checkAllDirections(points_queue);
+//            Point*ptr = points_queue->front;
+//            while (ptr != points_queue->rear->next){
+//                displayPoint(ptr);
+//                ptr = ptr->next;
+//            }
+//            cout<<"\n";
+        }else{
+            cout<<"#####Final path: ";
+            displayPath(points_queue->front);
+            cout<<"\n";
+        }
+        points_queue->front = points_queue->front->next;
+    } while (points_queue->front != points_queue->rear->next);
 
-    }
-    displayPath(points_queue->rear);
+
 }
 
 void displayPath(Point *list_tail) {
@@ -185,6 +181,8 @@ void displayPath(Point *list_tail) {
         displayPoint(ptr);
         ptr = getPoint(ptr->prev_point_index);
     }
+    cout << "(" << start_point->x << "," << start_point->y << ")";
+
 }
 
 void displayPoint(Point *point) {
