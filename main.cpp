@@ -149,8 +149,6 @@ void searchForPath(Point *&points_list, Point end_point) {
         }
         points_queue->front = points_queue->front->next;
     } while (points_queue->front != points_queue->rear->next);
-
-
 }
 
 void displayPath(Point *list_tail) {
