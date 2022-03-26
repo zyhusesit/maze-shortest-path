@@ -17,7 +17,7 @@ void checkAllDirections(PointQueue *points_queue);
 
 bool checkPoint(int x, int y);
 
-int getPointIndex(Point *&ptr_current_point);
+int getPointIndex(Point *ptr_current_point);
 
 void moveUp(PointQueue *&points_queue);
 
@@ -92,7 +92,7 @@ bool checkPoint(int x, int y) {
         return false;
 }
 
-int getPointIndex(Point *&ptr_current_point) {
+int getPointIndex(Point *ptr_current_point) {
     int i = 0;
     Point *ptr = start_point;
     while (ptr != ptr_current_point) {
